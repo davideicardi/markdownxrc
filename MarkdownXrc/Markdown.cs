@@ -123,6 +123,14 @@ namespace MarkdownSharp
         /// WARNING: this is a significant deviation from the markdown spec
         /// </summary>
         public bool StrictBoldItalic { get; set; }
+
+		/// <summary>
+		/// When null links are generated as usual, unchanged.
+		/// When not null this url is used as a substitution for the tilde (~) character.
+		/// This is required when you want to convert a virtual (relative) path to an application absolute path.
+		/// If the link does not start with the tilde (~) character, returns the link unchanged.
+		/// </summary>
+		public string BaseUrl { get; set; }
     }
 
 
@@ -183,6 +191,9 @@ namespace MarkdownSharp
                     case "Markdown.StrictBoldItalic":
                         _strictBoldItalic = Convert.ToBoolean(settings[key]);
                         break;
+					case "Markdown.BaseUrl":
+                        _baseUrl = Convert.ToString(settings[key]);
+                        break;
                 }
             }
         }
@@ -198,6 +209,7 @@ namespace MarkdownSharp
             _encodeProblemUrlCharacters = options.EncodeProblemUrlCharacters;
             _linkEmails = options.LinkEmails;
             _strictBoldItalic = options.StrictBoldItalic;
+			_baseUrl = options.BaseUrl;
         }
 
 
@@ -265,6 +277,19 @@ namespace MarkdownSharp
             set { _encodeProblemUrlCharacters = value; }
         }
         private bool _encodeProblemUrlCharacters = false;
+
+		/// <summary>
+		/// When null links are generated as usual, unchanged.
+		/// When not null this url is used as a substitution for the tilde (~) character.
+		/// This is required when you want to convert a virtual (relative) path to an application absolute path.
+		/// If the link does not start with the tilde (~) character, returns the link unchanged.
+		/// </summary>
+		public string BaseUrl
+		{
+			get { return _baseUrl; }
+			set { _baseUrl = value; }
+		}
+		private string _baseUrl = null;
 
         #endregion
 
@@ -544,13 +569,22 @@ namespace MarkdownSharp
         private string LinkEvaluator(Match match)
         {
             string linkID = match.Groups[1].Value.ToLowerInvariant();
-            _urls[linkID] = EncodeAmpsAndAngles(match.Groups[2].Value);
+
+			string linkUrl = EncodeAmpsAndAngles(match.Groups[2].Value);
+			_urls[linkID] = ApplyBaseUrl(linkUrl);
 
             if (match.Groups[3] != null && match.Groups[3].Length > 0)
                 _titles[linkID] = match.Groups[3].Value.Replace("\"", "&quot;");
 
             return "";
         }
+
+		private string ApplyBaseUrl(string linkUrl)
+		{
+			if (_baseUrl != null && linkUrl != null)
+				linkUrl = linkUrl.Replace("~", _baseUrl);
+			return linkUrl;
+		}
 
         // compiling this monster regex results in worse performance. trust me.
         private static Regex _blocksHtml = new Regex(GetBlockPattern(), RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace);
@@ -842,7 +876,8 @@ namespace MarkdownSharp
                 string url = _urls[linkID];
 
                 url = EncodeProblemUrlChars(url);
-                url = EscapeBoldItalic(url);                
+                url = EscapeBoldItalic(url);
+				url = ApplyBaseUrl(url);
                 result = "<a href=\"" + url + "\"";
 
                 if (_titles.ContainsKey(linkID))
@@ -873,7 +908,8 @@ namespace MarkdownSharp
                 string url = _urls[linkID];
 
                 url = EncodeProblemUrlChars(url);
-                url = EscapeBoldItalic(url);                
+                url = EscapeBoldItalic(url);
+				url = ApplyBaseUrl(url);
                 result = "<a href=\"" + url + "\"";
 
                 if (_titles.ContainsKey(linkID))
@@ -901,6 +937,7 @@ namespace MarkdownSharp
 
             url = EncodeProblemUrlChars(url);
             url = EscapeBoldItalic(url);
+			url = ApplyBaseUrl(url);
             if (url.StartsWith("<") && url.EndsWith(">"))
                 url = url.Substring(1, url.Length - 2); // remove <>'s surrounding URL, if present            
 
@@ -1445,6 +1482,7 @@ namespace MarkdownSharp
         private string HyperlinkEvaluator(Match match)
         {
             string link = match.Groups[1].Value;
+			link = ApplyBaseUrl(link);
             return string.Format("<a href=\"{0}\">{0}</a>", link);
         }
 
