@@ -192,7 +192,7 @@ namespace MarkdownSharp
                         _strictBoldItalic = Convert.ToBoolean(settings[key]);
                         break;
 					case "Markdown.BaseUrl":
-                        _baseUrl = Convert.ToString(settings[key]);
+                        BaseUrl = Convert.ToString(settings[key]);
                         break;
                 }
             }
@@ -209,7 +209,7 @@ namespace MarkdownSharp
             _encodeProblemUrlCharacters = options.EncodeProblemUrlCharacters;
             _linkEmails = options.LinkEmails;
             _strictBoldItalic = options.StrictBoldItalic;
-			_baseUrl = options.BaseUrl;
+			BaseUrl = options.BaseUrl;
         }
 
 
@@ -287,11 +287,24 @@ namespace MarkdownSharp
 		public string BaseUrl
 		{
 			get { return _baseUrl; }
-			set { _baseUrl = value; }
+			set 
+			{
+				_baseUrl = value;
+				ValidateBaseUrl();
+			}
 		}
 		private string _baseUrl = null;
 
         #endregion
+
+		private void ValidateBaseUrl()
+		{
+			if (_baseUrl != null)
+			{
+				if (_baseUrl.EndsWith("/"))
+					_baseUrl = _baseUrl.TrimEnd('/');
+			}
+		}
 
         private enum TokenType { Text, Tag }
 
@@ -878,6 +891,7 @@ namespace MarkdownSharp
                 url = EncodeProblemUrlChars(url);
                 url = EscapeBoldItalic(url);
 				url = ApplyBaseUrl(url);
+
                 result = "<a href=\"" + url + "\"";
 
                 if (_titles.ContainsKey(linkID))
@@ -1023,9 +1037,11 @@ namespace MarkdownSharp
 
             if (_urls.ContainsKey(linkID))
             {
-                string url = _urls[linkID];
+				string url = _urls[linkID];
                 url = EncodeProblemUrlChars(url);
-                url = EscapeBoldItalic(url);                
+                url = EscapeBoldItalic(url);
+				url = ApplyBaseUrl(url);
+
                 result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, altText);
 
                 if (_titles.ContainsKey(linkID))
@@ -1061,6 +1077,7 @@ namespace MarkdownSharp
                 url = url.Substring(1, url.Length - 2);    // Remove <>'s surrounding URL, if present
             url = EncodeProblemUrlChars(url);
             url = EscapeBoldItalic(url);
+			url = ApplyBaseUrl(url);
 
             result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, alt);
 
