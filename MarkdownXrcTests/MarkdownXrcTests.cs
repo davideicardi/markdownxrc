@@ -126,5 +126,19 @@ namespace MarkdownSharpTests
 
 			Assert.AreEqual(expected, actual);
 		}
+
+		[Test]
+		public void Tilde_character_may_be_replaced_only_at_the_start_of_the_url()
+		{
+			var target = new Markdown();
+			target.BaseUrl = "/virtualpath/";
+
+			string input = "Image: ![Alt text][id].\n\n[id]: http://test.com/~/url/to/image  \"Optional title attribute\"";
+			string expected = "<p>Image: <img src=\"http://test.com/~/url/to/image\" alt=\"Alt text\" title=\"Optional title attribute\" />.</p>\n";
+
+			string actual = target.Transform(input);
+
+			Assert.AreEqual(expected, actual);
+		}
     }
 }

@@ -594,8 +594,10 @@ namespace MarkdownSharp
 
 		private string ApplyBaseUrl(string linkUrl)
 		{
-			if (_baseUrl != null && linkUrl != null)
-				linkUrl = linkUrl.Replace("~", _baseUrl);
+			const string TILDE = "~";
+			if (_baseUrl != null && linkUrl != null && linkUrl.StartsWith(TILDE))
+				linkUrl = _baseUrl + linkUrl.Substring(1);
+
 			return linkUrl;
 		}
 
