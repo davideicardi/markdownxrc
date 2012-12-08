@@ -1,6 +1,8 @@
 Markdown xrc
 ====================
 
+C# Markdown processor
+
 markdownxrc is a fork of [markdownsharp][] version 1.13 (23/Sept/2012).
 The goal of this fork is to support virtual path link (with tilde ~).
 For example ~/test.html link inside a markdown file should produce 
@@ -16,3 +18,10 @@ MarkdownXrc is available on nuget: [markdownxrc@nuget][]
 
 [markdownxrc@nuget]: https://nuget.org/packages/MarkdownXrc
 [markdownsharp]: http://code.google.com/p/markdownsharp/
+
+
+## License
+
+Copyright (c) markdownsharp (http://code.google.com/p/markdownsharp/)
+
+[MIT License](http://opensource.org/licenses/mit-license.php)
